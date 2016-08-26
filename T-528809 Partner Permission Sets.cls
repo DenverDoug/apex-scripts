@@ -70,8 +70,16 @@ List<User> afmPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM Us
 												:partnerAdminProfileId, :partnerFundMgrProfileId, :partnerAFMProfileId, :partnerAFMNDProfileId)];
 System.debug('Admin and Fund Managers: ' + afmPartnerUsers.size());
 
-// #TODO add Admin Perm Set
-// #TODO add Fund Manager Perm Set
+// Add Admin and Fund Permission Sets
+List<PermissionSetAssignment> adminAndFundManagerPSAs = new List<PermissionSetAssignment>();
+for (User afmUser : afmPartnerUsers) {
+	PermissionSetAssignment adminPSA = new PermissionSetAssignment(PermissionSetId = myPermissionSetId, AssigneeId = myAssigneeId);
+	PermissionSetAssignment fundmgrPSA = new PermissionSetAssignment(PermissionSetId = myPermissionSetId, AssigneeId = myAssigneeId);
+	adminAndFundManagerPSAs.add(adminPSA);
+	adminAndFundManagerPSAs.add(fundmgrPSA);
+}
+Database.insert(adminAndFundManagerPSAs,false);
+
 
 // Get list of Admin and Fund Managers not using No Dashboard Profiles to add the final Perm Set for Dashboard Access
 // #TODO - SHOULD THIS JUST BE A DATA LOAD BASED ON CURRENT PROD GROUP?
@@ -87,7 +95,7 @@ System.debug('Dashboard Users: ' + dashboardPartnerUsers.size());
 // Move everyone to Partner User Profile who isn't already
 List<User> updatedNonPartnerUsers = new List<User>();
 
-for (pUser : nonPartnerUsers) {
+for (User pUser : nonPartnerUsers) {
 	pUser.ProfileId = partnerUserProfileId;
 	updatedNonPartnerUsers.add(pUser);
 }
