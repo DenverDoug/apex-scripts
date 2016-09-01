@@ -21,7 +21,6 @@ public Id partnerAFMNDProfileId;
 List<Profile> profileList = [SELECT Id, Name FROM Profile WHERE UserType = 'PowerPartner'];
 
 for(Profile p : profileList){
-
 	if (p.Name == 'Partner User') {
 		partnerUserProfileId = p.Id;
 		continue;
@@ -57,9 +56,6 @@ for(Profile p : profileList){
 	}
 }
 
-List<User> allPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM User WHERE UserType = 'PowerPartner'];
-System.debug('ALL Partner Users: ' + allPartnerUsers.size());
-
 // Get list of Partner Users NOT using Partner User Profile
 List<User> nonPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM User WHERE UserType = 'PowerPartner' AND ProfileId != :partnerUserProfileId];
 System.debug('Non Partner Users: ' + nonPartnerUsers.size());
@@ -71,34 +67,40 @@ List<User> afmPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM Us
 System.debug('Admin and Fund Managers: ' + afmPartnerUsers.size());
 
 // Add Admin and Fund Permission Sets
+public Id adminPermSetId = [SELECT Id FROM PermissionSet WHERE Name = 'PRM Partner User - Partner Admin'].Id;
+public Id fundMgrPermSetId  = [SELECT Id FROM PermissionSet WHERE Name = 'PRM Partner User - Fund Management'].Id;
+
 List<PermissionSetAssignment> adminAndFundManagerPSAs = new List<PermissionSetAssignment>();
 for (User afmUser : afmPartnerUsers) {
-	PermissionSetAssignment adminPSA = new PermissionSetAssignment(PermissionSetId = myPermissionSetId, AssigneeId = myAssigneeId);
-	PermissionSetAssignment fundmgrPSA = new PermissionSetAssignment(PermissionSetId = myPermissionSetId, AssigneeId = myAssigneeId);
+	PermissionSetAssignment adminPSA = new PermissionSetAssignment(PermissionSetId = adminPermSetId, AssigneeId = afmUser.Id);
+	PermissionSetAssignment fundmgrPSA = new PermissionSetAssignment(PermissionSetId = fundmgrPermSetId, AssigneeId = afmUser.Id);
 	adminAndFundManagerPSAs.add(adminPSA);
 	adminAndFundManagerPSAs.add(fundmgrPSA);
 }
-Database.insert(adminAndFundManagerPSAs,false);
 
-
-// Get list of Admin and Fund Managers not using No Dashboard Profiles to add the final Perm Set for Dashboard Access
-// #TODO - SHOULD THIS JUST BE A DATA LOAD BASED ON CURRENT PROD GROUP?
-// https://partnerconnect.my.salesforce.com/005?id=0PSo0000000AYw1&isUserEntityOverride=1
-/* List<User> dashboardPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM User WHERE UserType = 'PowerPartner' AND
-								ProfileId in (:distiAdminProfileId, :distiFundMgrProfileId, :distiAFMProfileId,
-												:partnerAdminProfileId, partnerFundMgrProfileId, :partnerAFMProfileId)];
-System.debug('Dashboard Users: ' + dashboardPartnerUsers.size());
-
-// #TODO add Dashboard Perm Set
-*/
+// Insert the Perm Set Assignments and report whether it was successful or not
+System.debug(adminAndFundManagerPSAs.size() + 'PermissionSetAssignments being inserted');
+List<Database.SaveResult> saveResult1 = Database.insert(adminAndFundManagerPSAs,false);
+for (Database.SaveResult sr:saveResult1) {
+	if(!sr.isSuccess()){
+		Database.Error err = sr.getErrors()[0];
+		System.debug('Permission Set Assignment insert failed with message: ' + err);
+	}
+}
 
 // Move everyone to Partner User Profile who isn't already
 List<User> updatedNonPartnerUsers = new List<User>();
-
 for (User pUser : nonPartnerUsers) {
 	pUser.ProfileId = partnerUserProfileId;
 	updatedNonPartnerUsers.add(pUser);
 }
-update updatedNonPartnerUsers;
 
-
+// Update the User Profiles and report whether it was successful or not
+System.debug(updatedNonPartnerUsers.size() + 'Partner Users being moved to Partner User Profile. Should be equal to ' + nonPartnerUsers.size());
+List<Database.SaveResult> saveResult2 = Database.update(updatedNonPartnerUsers,false);
+for (Database.SaveResult sr:saveResult2) {
+	if(!sr.isSuccess()){
+		Database.Error err = sr.getErrors()[0];
+		System.debug('Partner Users Profile Update failed with message: ' + err);
+	}
+}
