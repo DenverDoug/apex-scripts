@@ -23,7 +23,7 @@ for (Prior_HDS__c p : priors) {
      }
      updatedPriors.add(p);
 }
-update updatedPriors;
+update updatedPriors;  // #TODO enhance with logging and error handling
 
 
 // ******************************************
