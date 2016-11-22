@@ -110,8 +110,8 @@ for (User execUser : execPartnerUsers) {
 
 // Insert the Perm Set Assignments and report whether it was successful or not
 System.debug(dashboardPSAs.size() + ' Dashboard PermissionSetAssignments being inserted');
-List<Database.SaveResult> saveResult1 = Database.insert(dashboardPSAs,false);
-for (Database.SaveResult sr:saveResult1) {
+List<Database.SaveResult> saveResult2 = Database.insert(dashboardPSAs,false);
+for (Database.SaveResult sr:saveResult2) {
 	if(!sr.isSuccess()){
 		Database.Error err = sr.getErrors()[0];
 		System.debug('Permission Set Assignment insert failed with message: ' + err);
