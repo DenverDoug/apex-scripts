@@ -129,8 +129,8 @@ for (User pUser : nonPartnerUsers) {
 
 // Update the User Profiles and report whether it was successful or not
 System.debug(updatedNonPartnerUsers.size() + 'Partner Users being moved to Partner User Profile. Should be equal to ' + nonPartnerUsers.size());
-List<Database.SaveResult> saveResult2 = Database.update(updatedNonPartnerUsers,false);
-for (Database.SaveResult sr:saveResult2) {
+List<Database.SaveResult> saveResult3 = Database.update(updatedNonPartnerUsers,false);
+for (Database.SaveResult sr:saveResult3) {
 	if(!sr.isSuccess()){
 		Database.Error err = sr.getErrors()[0];
 		System.debug('Partner Users Profile Update failed with message: ' + err);
