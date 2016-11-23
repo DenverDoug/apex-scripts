@@ -57,7 +57,7 @@ for(Profile p : profileList){
 }
 
 // Get list of Partner Users NOT using Partner User Profile
-List<User> nonPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM User WHERE UserType = 'PowerPartner' AND ProfileId != :partnerUserProfileId];
+List<User> nonPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM User WHERE UserType = 'PowerPartner' AND ProfileId != :partnerUserProfileId LIMIT 1];
 System.debug('Non Partner Users: ' + nonPartnerUsers.size());
 
 
@@ -87,8 +87,10 @@ System.debug(adminAndFundManagerPSAs.size() + ' Admin and Fund Manager Permissio
 List<Database.SaveResult> saveResult1 = Database.insert(adminAndFundManagerPSAs,false);
 for (Database.SaveResult sr:saveResult1) {
 	if(!sr.isSuccess()){
-		Database.Error err = sr.getErrors()[0];
-		System.debug('Permission Set Assignment insert failed with message: ' + err);
+        for(Database.Error err : sr.getErrors()) {
+            System.debug('Admin and Fund Mgr Perm Set Insertion failed: ' + err.getStatusCode() + ': ' + err.getMessage());
+            System.debug('Fields that affected this error: ' + err.getFields());
+        }
 	}
 }
 
@@ -99,7 +101,7 @@ List<User> execPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM U
 System.debug('Partner Execs: ' + execPartnerUsers.size());
 
 // Add Dashboard Permission Set (different names in Prod vs Dev currently)
-public Id dashboardPermSetId = [SELECT Id FROM PermissionSet WHERE Name = 'PRM_Partner_User_Dashboard_Access'].Id;
+public Id dashboardPermSetId = [SELECT Id FROM PermissionSet WHERE Name in ('PartnerCommunityUsersDashBoardAccess', 'PRM_Partner_User_Dashboard_Access')].Id;
 System.debug('dashboardPermSetId is ' + dashboardPermSetId);
 
 List<PermissionSetAssignment> dashboardPSAs = new List<PermissionSetAssignment>();
@@ -113,8 +115,10 @@ System.debug(dashboardPSAs.size() + ' Dashboard PermissionSetAssignments being i
 List<Database.SaveResult> saveResult2 = Database.insert(dashboardPSAs,false);
 for (Database.SaveResult sr:saveResult2) {
 	if(!sr.isSuccess()){
-		Database.Error err = sr.getErrors()[0];
-		System.debug('Permission Set Assignment insert failed with message: ' + err);
+		for(Database.Error err : sr.getErrors()) {
+            System.debug('Dashboard Perm Set Insertion failed: ' + err.getStatusCode() + ': ' + err.getMessage());
+            System.debug('Fields that affected this error: ' + err.getFields());
+        }
 	}
 }
 
@@ -132,7 +136,9 @@ System.debug(updatedNonPartnerUsers.size() + 'Partner Users being moved to Partn
 List<Database.SaveResult> saveResult3 = Database.update(updatedNonPartnerUsers,false);
 for (Database.SaveResult sr:saveResult3) {
 	if(!sr.isSuccess()){
-		Database.Error err = sr.getErrors()[0];
-		System.debug('Partner Users Profile Update failed with message: ' + err);
+		for(Database.Error err : sr.getErrors()) {
+            System.debug('Partner Users Profile Update failed: ' + err.getStatusCode() + ': ' + err.getMessage());
+            System.debug('Fields that affected this error: ' + err.getFields());
+        }
 	}
 }
