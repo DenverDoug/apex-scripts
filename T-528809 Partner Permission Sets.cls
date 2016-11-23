@@ -99,7 +99,7 @@ List<User> execPartnerUsers = [SELECT Id, ContactId, AccountId, ProfileId FROM U
 System.debug('Partner Execs: ' + execPartnerUsers.size());
 
 // Add Dashboard Permission Set (different names in Prod vs Dev currently)
-public Id dashboardPermSetId = [SELECT Id FROM PermissionSet WHERE Name in ('PartnerCommunityUsersDashBoardAccess', 'PRM_Partner_User_Dashboard_Access')].Id;
+public Id dashboardPermSetId = [SELECT Id FROM PermissionSet WHERE Name = 'PRM_Partner_User_Dashboard_Access'].Id;
 System.debug('dashboardPermSetId is ' + dashboardPermSetId);
 
 List<PermissionSetAssignment> dashboardPSAs = new List<PermissionSetAssignment>();
